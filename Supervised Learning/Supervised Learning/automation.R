@@ -29,6 +29,39 @@ partisi = function(input_data,response_name) {
 
 }
 
+hitungSVM2 = function(train_data,test_data, target_respon, nu_value, gamma_value) {
+    
+    library(e1071);
+
+    model = svm(subset(train_data,select = -respon), train_data$respon, type = 'one-classification', nu = nu_value, gamma=gamma_value);
+
+    pred_trains = predict(model, subset(train_data,select= -respon));
+    pred_test = predict(model, subset(test_data, select = -respon));
+
+    pred_data = test_data;
+    pred_data$pred = pred_test;
+    pred_data$flag = 0;
+    pred_data$flag[pred_data$respon == target_respon & pred_data$pred == TRUE] = 1;
+    pred_data$flag[pred_data$respon != target_respon & pred_data$pred == FALSE] = 1;
+
+    print(model);
+
+    pred_train = train_data;
+    pred_train$pred = pred_trains;
+    pred_train$flag = 1;
+
+    print(paste("Training Accuracy : ", nrow(subset(pred_train, pred_train$pred == TRUE)) / nrow(pred_train)));
+    print(paste("Testing Accuracy : ", nrow(subset(pred_data, flag == 1)) / nrow(pred_data)));
+
+    pred_train$tipe = "TRAIN";
+    pred_data$tipe = "TEST";
+
+    train_test_data = rbind(pred_train, pred_data);
+
+    return(train_test_data);
+
+}
+
 hitungSVM = function(input_data,target_respon,nu_value) {
 
     library(e1071);
@@ -154,23 +187,160 @@ hitungSVM_multi = function(input_data, target_respon) {
 
 }
 
-hitungDecisionTree = function(input_data) {
+hitungSVM_multi2 = function(train_data,test_data, c_value, gamma_value) {
+
+    library(e1071);
+
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
+    model = svm(subset(train_data,select=-respon), train_data$respon, probability = TRUE,C=c_value,gamma=gamma_value);
+    pred_train = predict(model, subset(train_data, select = -respon), decision.values = TRUE, probability = TRUE);
+    pred_test = predict(model, subset(test_data, select = -respon), decision.values = TRUE, probability = TRUE);
+
+    #normalization and find specific prediction value 
+    pred_train_value = as.data.frame(attr(pred_train, "probabilities"));
+    pred_test_value = as.data.frame(attr(pred_test, "probabilities"));
+
+    pred_train_value$pred = -1;
+    for (i in 1:nrow(pred_train_value)) {
+
+        max_prob = pred_train_value[i, 1];
+        max_pos = 1;
+
+        for (j in 2:5) {
+            current_prob = pred_train_value[i, j];
+            current_pos = j;
+
+            if (current_prob > max_prob) {
+                max_prob = current_prob;
+                max_pos = current_pos;
+            }
+        }
+
+        pred_train_value$pred[i] = max_pos;
+    }
+
+    pred_test_value$pred = -1;
+    for (i in 1:nrow(pred_test_value)) {
+
+        max_prob = pred_test_value[i, 1];
+        max_pos = 1;
+
+        for (j in 2:5) {
+            current_prob = pred_test_value[i, j];
+            current_pos = j;
+
+            if (current_prob > max_prob) {
+                max_prob = current_prob;
+                max_pos = current_pos;
+            }
+        }
+
+        pred_test_value$pred[i] = max_pos;
+    }
+
+    pred_data = test_data;
+    pred_data$pred = pred_test_value$pred;
+    pred_data$flag = 0;
+    pred_data$flag[pred_data$respon == pred_data$pred] = 1;
+
+    print(model);
+
+    pred_train = df;
+    pred_train$pred = pred_train_value$pred;
+    pred_train$flag = 0;
+    pred_train$flag[pred_train$respon == pred_train$pred] = 1;
+
+    print(paste("Training Accuracy : ", nrow(subset(pred_train, pred_train$pred == TRUE)) / nrow(pred_train)));
+    print(paste("Testing Accuracy : ", nrow(subset(pred_data, flag == 1)) / nrow(pred_data)));
+
+    pred_train$tipe = "TRAIN";
+    pred_data$tipe = "TEST";
+
+    train_test_data = rbind(pred_train, pred_data);
+
+    return(train_test_data);
+
+}
+
+hitungDecisionTree = function(train_data,test_data) {
+
+    library(C50);
+    library(printr);
+
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
+    print("CART");
+
+    model = rpart(respon ~ ., data = train_data, method = "class");
+    pred = predict(model, test_data, type = "class");
+    confusionMatrix(pred, test_data$respon)
+
+    print("C50");
+
+    model = C5.0(respon ~ ., data = train_data);
+    results = predict(object = model, newdata = test_data, type = "class");
+    pred = predict(model, test_data);
+    confusionMatrix(pred, test_data$respon);
 
 }
 
 hitungRandomForest = function(train_data, test_data) {
 
+    library(caret);
+    library(randomForest);
+    library(e1071);
+
     train_data$respon = as.factor(train_data$respon);
     test_data$respon = as.factor(test_data$respon);
 
-    model = randomForest(respon ~ ., data = train_data);
+    model = randomForest(respon ~ ., data = train_data,importance=TRUE);
     pred = predict(model, newdata = test_data);
+    print(table(pred, test_data$respon));
+    print(confusionMatrix(pred, test_data$respon));
+
+    return(model);
+
+}
+
+hitungNaiveBayes = function(train_data,test_data) {
+
+    library(e1071);
+
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
+    model = naiveBayes(respon ~ ., data = train_data)
+    pred = predict(model, newdata = subset(test_data, select = -respon));
+
     print(table(pred, test_data$respon));
     print(confusionMatrix(pred, test_data$respon));
 
 }
 
-hitungNaiveBayes = function(input_data) {
+hitungNaiveBayes_normalization = function(train_data, test_data) {
+
+    library(e1071)
+    library(forecast)
+
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
+    for (i in 1:(ncol(train_data)-1)) {
+            train_data[, i] = BoxCox(train_data[, i], BoxCox.lambda(train_data[, i]));
+    }
+
+    for (i in 1:(ncol(test_data)-1)) {
+            test_data[, i] = BoxCox(test_data[, i], BoxCox.lambda(test_data[, i]));
+    }
+
+    model = naiveBayes(respon ~ ., data = train_data)
+    pred = predict(model, newdata = subset(test_data, select = -respon));
+
+    print(table(pred, test_data$respon));
+    print(confusionMatrix(pred, test_data$respon));
 
 }
 
@@ -234,7 +404,7 @@ as.data.frame();
 colnames(train_dataset1_assessed)[colSums(is.na(train_dataset1_assessed)) > 0]
 #normalization by replace NA with 0
 train_dataset1_norm = na.replace(train_dataset1_assessed, 0);
-colnames(test_dataset1_norm)[colSums(is.na(test_dataset1_norm)) > 0]
+colnames(train_dataset1_norm)[colSums(is.na(train_dataset1_norm)) > 0]
 
 test_dataset1$username = NULL;
 test_dataset1$source.word = NULL;
@@ -253,5 +423,17 @@ colnames(test_dataset1_norm)[colSums(is.na(test_dataset1_norm)) > 0]
 hitungFeaturesImportance(train_dataset1_norm,test_dataset1_norm);
 
 modelSVM = hitungSVM(dataset1_part, 5, 0.1);
+modelSVM2 = hitungSVM2(train_dataset1_norm, test_dataset1_norm, 5, 0.1, 0.001);
+
+modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 0.1, 0.01);
+modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 0.01, 0.01);
+modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 1, 0.01);
+modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 10, 0.01);
+
 modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
+
+hitungNaiveBayes(train_dataset1_norm, test_dataset1_norm);
+
+hitungDecisionTree(train_dataset1_norm, test_dataset1_norm);
+
 

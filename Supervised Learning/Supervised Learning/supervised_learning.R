@@ -180,10 +180,17 @@ text(fit, use.n = TRUE);
 plot(fit2);
 text(fit2, use.n = TRUE);
 
+#CTREE
+
+library(party);
+model = ctree(respon ~ ., data = train_data);
+pred = table(predict(model), test_data$respon);
+confusionMatrix(pred,test_data$respon);
+
 #CART
 
 model = rpart(respon ~ ., data = train_data, method = "class");
-pred = predict(model, test, type = "class");
+pred = predict(model, test_data, type = "class");
 confusionMatrix(pred, test_data$respon)
 
 #C4.5
@@ -205,11 +212,6 @@ model = C5.0(respon ~ ., data = train_data);
 results = predict(object = model, newdata = test_data, type = "class");
 pred = predict(model, test_data);
 confusionMatrix(pred, test_data$respon);
-
-#Information Index
-
-#Gini index
-
 
 ###################################
 
@@ -290,6 +292,24 @@ data(PimaIndiansDiabetes)
 control <- rfeControl(functions = rfFuncs, method = "cv", number = 10)
 # run the RFE algorithm
 results <- rfe(PimaIndiansDiabetes[, 1:8], PimaIndiansDiabetes[, 9], sizes = c(1:8), rfeControl = control)
+# summarize the results
+print(results)
+# list the chosen features
+predictors(results)
+# plot the results
+plot(results, type = c("g", "o"))
+
+# ensure the results are repeatable
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the data
+input_data = rbind(train_dataset1_norm, test_dataset1_norm)
+# define the control using a random forest selection function
+control <- rfeControl(functions = rfFuncs, method = "cv", number = 10)
+# run the RFE algorithm
+results <- rfe(input_data[, 1:ncol(input_data)-1], input_data$respon, sizes = c(1:ncol(input_data)-1), rfeControl = control)
 # summarize the results
 print(results)
 # list the chosen features
