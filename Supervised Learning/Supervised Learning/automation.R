@@ -281,6 +281,7 @@ hitungDecisionTree = function(train_data,test_data) {
 
     print("CART");
 
+    library(rpart);
     model = rpart(respon ~ ., data = train_data, method = "class");
     pred = predict(model, test_data, type = "class");
     print(confusionMatrix(pred, test_data$respon));
@@ -351,26 +352,32 @@ hitungNaiveBayes_normalization = function(train_data, test_data) {
 
 }
 
-hitungFeaturesImportance = function(train_data,test_data) {
+hitungFeaturesImportance = function(train_data,test_data,modelRandomForest) {
 
-    # ensure results are repeatable
-    set.seed(7)
-    # load the library
-    library(mlbench)
-    library(caret)
-    # load the dataset
-    input_data = rbind(train_data, test_data)
-    input_data$respon = as.factor(input_data$respon);
-    # prepare training scheme
-    control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-    # train the model
-    model <- train(respon ~ ., data = input_data, method = "lvq", preProcess = "scale", trControl = control)
-    # estimate variable importance
-    importance <- varImp(model, scale = FALSE)
-    # summarize importance
-    print(importance)
-    # plot importance
-    plot(importance)
+    library(dplyr);
+
+    set.seed(12345);
+
+    importances = data.frame(importance(modelRandomForest));
+    kolom_train_data = colnames(train_dataset1_norm)[1:ncol(train_dataset1_norm) - 1];
+    importances$kolom = kolom_train_data;
+    importances = rbind(importances, importances[1,]);
+
+    importancesMDA = importances %>%
+    select(kolom, MeanDecreaseAccuracy) %>%
+    arrange(MeanDecreaseAccuracy) %>%
+    as.data.frame();
+
+    importancesMDG = importances %>%
+    select(kolom, MeanDecreaseGini) %>%
+    arrange(MeanDecreaseGini) %>%
+    as.data.frame();
+
+    for (i in 1:nrow(importances)) {
+
+
+
+    }
 
 }
 
@@ -437,8 +444,25 @@ modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 0.01, 
 modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 1, 0.01);
 modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 10, 0.01);
 
+set.seed(12345);
+
 modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
 
 hitungNaiveBayes(train_dataset1_norm, test_dataset1_norm);
 
 hitungDecisionTree(train_dataset1_norm, test_dataset1_norm);
+
+#############
+
+set.seed(12345);
+
+modelRandomForest = hitungRandomForest(train_dataset1_normMDA, test_dataset1_normMDA);
+hitungNaiveBayes(train_dataset1_normMDA, test_dataset1_normMDA);
+hitungDecisionTree(train_dataset1_normMDA, test_dataset1_normMDA);
+
+modelRandomForest = hitungRandomForest(train_dataset1_normMDG, test_dataset1_normMDG);
+hitungNaiveBayes(train_dataset1_normMDG, test_dataset1_normMDG);
+hitungDecisionTree(train_dataset1_normMDG, test_dataset1_normMDG);
+
+
+

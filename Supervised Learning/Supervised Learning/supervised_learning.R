@@ -48,8 +48,11 @@ pred_prob = predict(model, x, decision.values = TRUE, probability = TRUE);
 
 library(e1071);
 
-train_data = train_dataset1_norm;
-test_data = test_dataset1_norm;
+train_data_back = train_data;
+test_data_back = test_data;
+
+train_data = train_dataset1_normMDG;
+test_data = test_dataset1_normMDG;
 
 train_data5 = subset(train_data, respon == 5, select = -respon);
 train_data54 = subset(train_data, respon >= 4, select = -respon);
@@ -63,9 +66,9 @@ train_data5432 = subset(train_data, respon >= 2, select = -respon);
 #model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
 
 model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001,gamma=0.01);
-model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 1, gamma = 0.0001);
+model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
 model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
-model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 1, gamma = 0.0001);
+model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
 
 pred5 = predict(model5, subset(test_data,select=-respon));
 pred4 = predict(model54, subset(test_data, select = -respon));
@@ -115,6 +118,9 @@ as.data.frame();
 ####################################
 
 library(e1071);
+
+train_data_back = train_data;
+test_data_back = test_data;
 
 train_data = train_dataset1_norm;
 test_data = test_dataset1_norm;
@@ -465,4 +471,56 @@ print(results)
 predictors(results)
 # plot the results
 plot(results, type = c("g", "o"))
+
+######### RANDOM FOREST FEATURE SELECTIONS
+# RUN MODEL FIRST!!!
+
+importances = data.frame(importance(modelRandomForest));
+kolom_train_data = colnames(train_dataset1_norm)[1:ncol(train_dataset1_norm) - 1];
+importances$kolom = kolom_train_data;
+importances = rbind(importances, importances[1,]);
+
+meanMDA = mean(importances$MeanDecreaseAccuracy);
+meanMDG = mean(importances$MeanDecreaseGini);
+
+q3MDA = quantile(importances$MeanDecreaseAccuracy)[4];
+q3MDG = quantile(importances$MeanDecreaseGini)[4];
+
+importances$threshMDA = 0;
+importances$threshMDG = 0;
+
+importances$threshMDA[importances$MeanDecreaseAccuracy >= q3MDA] = 1;
+importances$threshMDG[importances$MeanDecreaseGini >= q3MDG] = 1;
+
+featuresMDA = subset(importances, threshMDA == 1);
+featuresMDG = subset(importances, threshMDG == 1);
+
+namaMDA = featuresMDA$kolom;
+namaMDG = featuresMDG$kolom;
+
+train_dataset1_normMDA = train_dataset1_norm %>%
+select(namaMDA) %>%
+as.data.frame();
+
+train_dataset1_normMDA$respon = train_dataset1_norm$respon;
+
+train_dataset1_normMDG = train_dataset1_norm %>%
+select(namaMDG) %>%
+as.data.frame();
+
+train_dataset1_normMDG$respon = train_dataset1_norm$respon;
+
+test_dataset1_normMDA = test_dataset1_norm %>%
+select(namaMDA) %>%
+as.data.frame();
+
+test_dataset1_normMDA$respon = test_dataset1_norm$respon;
+
+test_dataset1_normMDG = test_dataset1_norm %>%
+select(namaMDG) %>%
+as.data.frame();
+
+test_dataset1_normMDG$respon = test_dataset1_norm$respon;
+
+hitungRandomForest(train_dataset1_normMDA, test_dataset1_normMDA);
 
