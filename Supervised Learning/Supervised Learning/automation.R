@@ -272,18 +272,25 @@ hitungDecisionTree = function(train_data,test_data) {
     train_data$respon = as.factor(train_data$respon);
     test_data$respon = as.factor(test_data$respon);
 
+    print("CHAID");
+
+    library(party);
+    model = ctree(respon ~ ., data = train_data);
+    pred = predict(model, test_data);
+    print(confusionMatrix(pred, test_data$respon));
+
     print("CART");
 
     model = rpart(respon ~ ., data = train_data, method = "class");
     pred = predict(model, test_data, type = "class");
-    confusionMatrix(pred, test_data$respon)
+    print(confusionMatrix(pred, test_data$respon));
 
     print("C50");
 
     model = C5.0(respon ~ ., data = train_data);
     results = predict(object = model, newdata = test_data, type = "class");
     pred = predict(model, test_data);
-    confusionMatrix(pred, test_data$respon);
+    print(confusionMatrix(pred, test_data$respon));
 
 }
 
@@ -435,5 +442,3 @@ modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
 hitungNaiveBayes(train_dataset1_norm, test_dataset1_norm);
 
 hitungDecisionTree(train_dataset1_norm, test_dataset1_norm);
-
-

@@ -43,6 +43,155 @@ model = svm(x, y, probability = TRUE);
 pred_prob = predict(model, x, decision.values = TRUE, probability = TRUE);
 
 ####################################
+# Cumulative One-Class SVM
+####################################
+
+library(e1071);
+
+train_data = train_dataset1_norm;
+test_data = test_dataset1_norm;
+
+train_data5 = subset(train_data, respon == 5, select = -respon);
+train_data54 = subset(train_data, respon >= 4, select = -respon);
+train_data543 = subset(train_data, respon >= 3, select = -respon);
+train_data5432 = subset(train_data, respon >= 2, select = -respon);
+
+#Best nu=0.001, gamma=0.01 accuracy=78.03
+#model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+#model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+#model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+#model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+
+model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001,gamma=0.01);
+model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 1, gamma = 0.0001);
+model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 1, gamma = 0.0001);
+
+pred5 = predict(model5, subset(test_data,select=-respon));
+pred4 = predict(model54, subset(test_data, select = -respon));
+pred3 = predict(model543, subset(test_data, select = -respon));
+pred2 = predict(model5432, subset(test_data, select = -respon));
+
+head(pred5);
+head(pred4);
+head(pred3);
+head(pred2);
+head(test_data$respon);
+
+preds = data.frame(pred5, pred4, pred3, pred2);
+preds$pred = -1;
+
+for (i in 1:nrow(preds)) {
+    if (preds$pred5[i]) {
+        preds$pred[i] = 5;
+    } else {
+        if (preds$pred4[i]) {
+            preds$pred[i] = 4;
+        } else {
+            if (preds$pred3[i]) {
+                preds$pred[i] = 3;
+            } else {
+                if (preds$pred2[i]) {
+                    preds$pred[i] = 2;
+                } else {
+                    preds$pred[i] = 1;
+                }
+            }
+        }
+    }
+}
+
+preds$target = test_data$respon;
+
+confusionMatrix(preds$pred, test_data$respon);
+
+test_data %>%
+group_by(respon) %>%
+summarise(jumlah_data = n(), persentase = n() / 4679) %>%
+as.data.frame();
+
+####################################
+# Low Vote One-Class SVM
+####################################
+
+library(e1071);
+
+train_data = train_dataset1_norm;
+test_data = test_dataset1_norm;
+
+train_data5 = subset(train_data, respon == 5, select = -respon);
+train_data4 = subset(train_data, respon == 4, select = -respon);
+train_data3 = subset(train_data, respon == 3, select = -respon);
+train_data2 = subset(train_data, respon == 2, select = -respon);
+train_data1 = subset(train_data, respon == 1, select = -respon);
+
+train_data5$user_is_age_0 = NULL;
+train_data4$user_is_age_0 = NULL;
+train_data3$user_is_age_0 = NULL;
+train_data2$user_is_age_0 = NULL;
+train_data1$user_is_age_0 = NULL;
+
+test_data$user_is_age_0 = NULL;
+
+#Best nu=0.001, gamma=0.01 accuracy=78.03
+#model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+#model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+#model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+#model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+
+model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+model4 = svm(train_data4, train_data4$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+model2 = svm(train_data2, train_data2$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+model1 = svm(train_data1, train_data1$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+
+pred5 = predict(model5, subset(test_data, select = -respon));
+pred4 = predict(model4, subset(test_data, select = -respon));
+pred3 = predict(model3, subset(test_data, select = -respon));
+pred2 = predict(model2, subset(test_data, select = -respon));
+pred1 = predict(model1, subset(test_data, select = -respon));
+
+head(pred5);
+head(pred4);
+head(pred3);
+head(pred2);
+head(pred1);
+head(test_data$respon);
+
+preds = data.frame(pred5, pred4, pred3, pred2,pred1);
+preds$pred = -1;
+
+for (i in 1:nrow(preds)) {
+    if (preds$pred5[i]) {
+        preds$pred[i] = 5;
+    } else {
+        if (preds$pred4[i]) {
+            preds$pred[i] = 4;
+        } else {
+            if (preds$pred3[i]) {
+                preds$pred[i] = 3;
+            } else {
+                if (preds$pred2[i]) {
+                    preds$pred[i] = 2;
+                } else {
+                    preds$pred[i] = 1;
+                }
+            }
+        }
+    }
+}
+
+preds$target = test_data$respon;
+
+confusionMatrix(preds$pred, test_data$respon);
+
+test_data %>%
+group_by(respon) %>%
+summarise(jumlah_data = n(), persentase = n() / 4679) %>%
+as.data.frame();
+
+
+####################################
 # 10-folds Cross Validation
 ####################################
 
@@ -180,7 +329,7 @@ text(fit, use.n = TRUE);
 plot(fit2);
 text(fit2, use.n = TRUE);
 
-#CTREE
+#CHAID
 
 library(party);
 model = ctree(respon ~ ., data = train_data);
