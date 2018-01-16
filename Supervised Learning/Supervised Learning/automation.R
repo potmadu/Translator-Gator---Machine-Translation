@@ -358,26 +358,52 @@ hitungFeaturesImportance = function(train_data,test_data,modelRandomForest) {
 
     set.seed(12345);
 
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
     importances = data.frame(importance(modelRandomForest));
-    kolom_train_data = colnames(train_dataset1_norm)[1:ncol(train_dataset1_norm) - 1];
+    kolom_train_data = colnames(train_data)[1:ncol(train_data) - 1];
     importances$kolom = kolom_train_data;
     importances = rbind(importances, importances[1,]);
 
     importancesMDA = importances %>%
     select(kolom, MeanDecreaseAccuracy) %>%
-    arrange(MeanDecreaseAccuracy) %>%
+    arrange(-MeanDecreaseAccuracy) %>%
     as.data.frame();
 
     importancesMDG = importances %>%
     select(kolom, MeanDecreaseGini) %>%
-    arrange(MeanDecreaseGini) %>%
+    arrange(-MeanDecreaseGini) %>%
     as.data.frame();
 
-    for (i in 1:nrow(importances)) {
+    importancesMDA$results = -1;
 
+    for (i in 1:nrow(importancesMDA)) {
 
+        kolom = importancesMDA$kolom[1:(nrow(importancesMDA) - i)];
+
+        train_dataset1_normMDA = train_data %>%
+        select(kolom) %>%
+        as.data.frame();
+
+        train_dataset1_normMDA$respon = as.factor(train_data$respon);
+
+        test_dataset1_normMDA = test_data %>%
+        select(kolom) %>%
+        as.data.frame();
+
+        test_dataset1_normMDA$respon = as.factor(test_data$respon);
+
+        model = randomForest(respon ~ ., data = train_data, importance = TRUE);
+        pred = predict(model, newdata = test_data);
+        hasil = confusionMatrix(pred, test_data$respon);
+        akurasi = as.numeric(hasil$overall[1]);
+
+        importancesMDA$results[i] = akurasi;
 
     }
+
+    return(importancesMDA);
 
 }
 
