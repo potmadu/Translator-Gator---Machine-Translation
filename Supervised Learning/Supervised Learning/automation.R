@@ -420,14 +420,20 @@ target_column = "manual_assessment";
 
 train_data = baca(train_file);
 colnames(train_data)[colnames(train_data) == target_column] = "respon";
+train_data$manual_origin_source = NULL;
+train_data$origin_mean_vote_up = NULL;
 
 test_data = baca(test_file);
 colnames(test_data)[colnames(test_data) == target_column] = "respon";
+test_data$manual_origin_source = NULL;
+test_data$origin_mean_vote_up = NULL;
 
 train_data %>%
-filter(is.na(respon) | is.na(manual_origin_source) | is.na(origin_word_entropy)) %>%
-group_by(manual_origin_source,origin_word_entropy,respon) %>%
+filter(is.na(respon) | is.na(origin_word_entropy)) %>%
+group_by(origin_word_entropy, respon) %>%
 summarise(jumlah_data = n());
+
+#| is.na(manual_origin_source)
 
 #Dataset1 = manual_assessment as target
 train_dataset1 = train_data;
@@ -438,7 +444,7 @@ train_dataset1$username = NULL;
 train_dataset1$source.word = NULL;
 train_dataset1$target.word = NULL;
 train_dataset1_assessed = train_dataset1 %>%
-filter(!is.na(respon) & !is.na(manual_origin_source) & !is.na(origin_word_entropy)) %>%
+filter(!is.na(respon) & !is.na(origin_word_entropy)) %>%
 as.data.frame();
 #check na value
 colnames(train_dataset1_assessed)[colSums(is.na(train_dataset1_assessed)) > 0]
@@ -450,8 +456,10 @@ test_dataset1$username = NULL;
 test_dataset1$source.word = NULL;
 test_dataset1$target.word = NULL;
 test_dataset1_assessed = test_dataset1 %>%
-filter(!is.na(respon) & !is.na(manual_origin_source) & !is.na(origin_word_entropy)) %>%
+filter(!is.na(respon) & !is.na(origin_word_entropy)) %>%
 as.data.frame();
+#& !is.na(manual_origin_source)
+
 #check na value
 colnames(test_dataset1_assessed)[colSums(is.na(test_dataset1_assessed)) > 0]
 #normalization by replace NA with 0
@@ -473,9 +481,7 @@ modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 10, 0.
 set.seed(12345);
 
 modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
-
 hitungNaiveBayes(train_dataset1_norm, test_dataset1_norm);
-
 hitungDecisionTree(train_dataset1_norm, test_dataset1_norm);
 
 #############

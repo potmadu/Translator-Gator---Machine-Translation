@@ -51,8 +51,8 @@ library(e1071);
 train_data_back = train_data;
 test_data_back = test_data;
 
-train_data = train_dataset1_normMDG;
-test_data = test_dataset1_normMDG;
+train_data = train_dataset1_normMDA;
+test_data = test_dataset1_normMDA;
 
 train_data5 = subset(train_data, respon == 5, select = -respon);
 train_data54 = subset(train_data, respon >= 4, select = -respon);
@@ -65,10 +65,10 @@ train_data5432 = subset(train_data, respon >= 2, select = -respon);
 #model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
 #model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
 
-model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001,gamma=0.01);
-model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
-model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
-model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.1,gamma=0.01);
+model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.1, gamma = 1);
+model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.1, gamma = 1);
 
 pred5 = predict(model5, subset(test_data,select=-respon));
 pred4 = predict(model54, subset(test_data, select = -respon));
@@ -486,11 +486,34 @@ meanMDG = mean(importances$MeanDecreaseGini);
 q3MDA = quantile(importances$MeanDecreaseAccuracy)[4];
 q3MDG = quantile(importances$MeanDecreaseGini)[4];
 
+q80MDA = quantile(importances$MeanDecreaseAccuracy,0.8);
+q80MDG = quantile(importances$MeanDecreaseGini,0.8);
+
+q85MDA = quantile(importances$MeanDecreaseAccuracy, 0.85);
+q85MDG = quantile(importances$MeanDecreaseGini, 0.85);
+
+q90MDA = quantile(importances$MeanDecreaseAccuracy, 0.9);
+q90MDG = quantile(importances$MeanDecreaseGini, 0.9);
+
+q95MDA = quantile(importances$MeanDecreaseAccuracy, 0.95);
+q95MDG = quantile(importances$MeanDecreaseGini, 0.95);
+
+q96MDA = quantile(importances$MeanDecreaseAccuracy, 0.96);
+q96MDG = quantile(importances$MeanDecreaseGini, 0.96);
+
+q97MDA = quantile(importances$MeanDecreaseAccuracy, 0.97);
+q97MDG = quantile(importances$MeanDecreaseGini, 0.97);
+
+q98MDA = quantile(importances$MeanDecreaseAccuracy, 0.98);
+q98MDG = quantile(importances$MeanDecreaseGini, 0.98);
+
+#Spearman, Kendall, Polycholic
+
 importances$threshMDA = 0;
 importances$threshMDG = 0;
 
-importances$threshMDA[importances$MeanDecreaseAccuracy >= q3MDA] = 1;
-importances$threshMDG[importances$MeanDecreaseGini >= q3MDG] = 1;
+importances$threshMDA[importances$MeanDecreaseAccuracy >= meanMDA] = 1;
+importances$threshMDG[importances$MeanDecreaseGini >= meanMDA] = 1;
 
 featuresMDA = subset(importances, threshMDA == 1);
 featuresMDG = subset(importances, threshMDG == 1);
@@ -523,4 +546,3 @@ as.data.frame();
 test_dataset1_normMDG$respon = test_dataset1_norm$respon;
 
 hitungRandomForest(train_dataset1_normMDA, test_dataset1_normMDA);
-
