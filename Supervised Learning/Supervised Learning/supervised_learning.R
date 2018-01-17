@@ -441,8 +441,8 @@ model <- keras_model_sequential()
 
 # Add layers to the model
 model %>%
-    layer_dense(units = 8, activation = 'relu', input_shape = c(4)) %>%
-    layer_dense(units = 3, activation = 'softmax')
+    layer_dense(units = 180, activation = 'relu', input_shape = c(90)) %>%
+    layer_dense(units = 6, activation = 'softmax')
 
 # Print a summary of a model
 summary(model)

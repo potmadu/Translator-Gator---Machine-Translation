@@ -407,6 +407,102 @@ hitungFeaturesImportance = function(train_data,test_data,modelRandomForest) {
 
 }
 
+# Build your own `normalize()` function
+normalize <- function(x) {
+    num <- x - min(x)
+    denom <- max(x) - min(x)
+    return(num / denom)
+};
+
+
+hitungSoftmax = function(train_data,test_data) {
+
+    library(keras);
+
+    train_data$respon = as.numeric(train_data$respon)-1;
+    test_data$respon = as.numeric(test_data$respon) - 1;
+
+    train_data_norm = as.data.frame(lapply(train_data[1:(ncol(train_data)-1)], normalize));
+    test_data_norm = as.data.frame(lapply(test_data[1:(ncol(test_data) - 1)], normalize));
+    train_data_norm$respon = train_data$respon;
+    test_data_norm$respon = test_data$respon;
+
+    train_data_matrix = as.matrix(train_data);
+    test_data_matrix = as.matrix(test_data);
+
+    dimnames(train_data_matrix) = NULL;
+    dimnames(test_data_matrix) = NULL;
+
+    train_data_matrix_wTarget = train_data_matrix[, 1:(ncol(train_data_matrix) - 1)];
+    train_data_matrix_target = train_data_matrix[, ncol(train_data_matrix)];
+
+    test_data_matrix_wTarget = test_data_matrix[, 1:(ncol(test_data_matrix) - 1)];
+    test_data_matrix_target = test_data_matrix[, ncol(test_data_matrix)];
+
+    train_data_matrix_labels = to_categorical(train_data_matrix_target);
+    test_data_matrix_labels = to_categorical(test_data_matrix_target);
+
+    # Initialize a sequential model
+    model = keras_model_sequential()
+
+    # Add layers to the model
+    # BEST RESULTS 1 hidden 180 units : 77.80%
+    # 2 hidden: 180 units + 90 units : 78.49968%
+    model %>%
+    layer_dense(units = 180, activation = 'relu', input_shape = c(90)) %>%
+    layer_dense(units = 90, activation = 'relu') %>%
+    layer_dense(units = 5, activation = 'softmax');
+
+    # Compile the model
+    model %>% compile(
+     loss = 'categorical_crossentropy',
+     optimizer = 'adam',
+     metrics = 'accuracy'
+     )
+
+    # Store the fitting history in `history` 
+    history <- model %>% fit(
+     train_data_matrix_wTarget,
+     train_data_matrix_labels,
+     epochs = 200,
+     batch_size = 5,
+     validation_split = 0.2
+    )
+
+    # Plot the history
+    plot(history)
+
+    # Plot the model loss of the training data
+    plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+
+    # Plot the model loss of the test data
+    lines(history$metrics$val_loss, col = "green")
+
+    # Add legend
+    legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+    # Plot the accuracy of the training data 
+    plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+
+    # Plot the accuracy of the validation data
+    lines(history$metrics$val_acc, col = "green")
+
+    # Add Legend
+    legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+    # Predict the classes for the test data
+    classes = model %>% predict_classes(test_data_matrix_wTarget, batch_size = 128)
+
+    # Evaluate on test data and labels
+    score = model %>% evaluate(test_data_matrix_wTarget, test_data_matrix_labels, batch_size = 128)
+
+    # Print the score
+    print(score)
+
+    return(output);
+
+}
+
 #################################
 # Main Program
 #################################
@@ -496,5 +592,4 @@ modelRandomForest = hitungRandomForest(train_dataset1_normMDG, test_dataset1_nor
 hitungNaiveBayes(train_dataset1_normMDG, test_dataset1_normMDG);
 hitungDecisionTree(train_dataset1_normMDG, test_dataset1_normMDG);
 
-
-
+hitungSoftmax(train_dataset1_norm, test_dataset1_norm);
