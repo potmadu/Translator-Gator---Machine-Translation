@@ -388,9 +388,206 @@ table(predict(fit, iris[-sub,], type = "class"), iris[-sub, "Species"]);
 # Softmax Classifier
 ####################################
 
-library(nnet);
+library(keras);
 
-seeds = read.csv("seeds.csv", header = T);
+data(iris);
+
+# Build your own `normalize()` function
+normalize <- function(x) {
+    num <- x - min(x)
+    denom <- max(x) - min(x)
+    return(num / denom)
+};
+
+# Normalize the `iris` data
+iris_norm <- as.data.frame(lapply(iris[1:4], normalize));
+
+iris[, 5] <- as.numeric(iris[, 5]) - 1;
+
+# Turn `iris` into a matrix
+iris <- as.matrix(iris);
+
+# Set iris `dimnames` to `NULL`
+dimnames(iris) <- NULL;
+
+# Normalize the `iris` data
+iris2 <- normalize(iris[, 1:4])
+
+# Return the summary of `iris`
+summary(iris2);
+
+# Determine sample size
+ind <- sample(2, nrow(iris2), replace = TRUE, prob = c(0.80, 0.20))
+
+# Split the `iris` data
+iris.training <- iris2[ind == 1, 1:4]
+iris.test <- iris2[ind == 2, 1:4]
+
+# Split the class attribute
+iris.trainingtarget <- iris[ind == 1, 5]
+iris.testtarget <- iris[ind == 2, 5]
+
+# One hot encode training target values
+iris.trainLabels <- to_categorical(iris.trainingtarget)
+
+# One hot encode test target values
+iris.testLabels <- to_categorical(iris.testtarget)
+
+# Print out the iris.testLabels to double check the result
+print(iris.testLabels)
+
+# Initialize a sequential model
+model <- keras_model_sequential()
+
+# Add layers to the model
+model %>%
+    layer_dense(units = 8, activation = 'relu', input_shape = c(4)) %>%
+    layer_dense(units = 3, activation = 'softmax')
+
+# Print a summary of a model
+summary(model)
+
+# Get model configuration
+get_config(model)
+
+# Get layer configuration
+get_layer(model, index = 1)
+
+# List the model's layers
+model$layers
+
+# List the input tensors
+model$inputs
+
+# List the output tensors
+model$outputs
+
+# Compile the model
+model %>% compile(
+     loss = 'categorical_crossentropy',
+     optimizer = 'adam',
+     metrics = 'accuracy'
+ )
+
+# Fit the model 
+model %>% fit(
+     iris.training,
+     iris.trainLabels,
+     epochs = 200,
+     batch_size = 5,
+     validation_split = 0.2
+ )
+
+# Store the fitting history in `history` 
+history <- model %>% fit(
+     iris.training,
+     iris.trainLabels,
+     epochs = 200,
+     batch_size = 5,
+     validation_split = 0.2
+ )
+
+# Plot the history
+plot(history)
+
+# Plot the model loss of the training data
+plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+
+# Plot the model loss of the test data
+lines(history$metrics$val_loss, col = "green")
+
+# Add legend
+legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+# Plot the accuracy of the training data 
+plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+
+# Plot the accuracy of the validation data
+lines(history$metrics$val_acc, col = "green")
+
+# Add Legend
+legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+# Predict the classes for the test data
+classes <- model %>% predict_classes(iris.test, batch_size = 128)
+
+# Confusion matrix
+table(iris.testtarget, classes)
+
+# Evaluate on test data and labels
+score <- model %>% evaluate(iris.test, iris.testLabels, batch_size = 128)
+
+# Print the score
+print(score)
+
+############ LAYER EVALUATIONS
+
+# Initialize a sequential model
+model <- keras_model_sequential()
+
+# Add layers to the model
+model %>%
+    layer_dense(units = 8, activation = 'relu', input_shape = c(4)) %>%
+    layer_dense(units = 5, activation = 'relu') %>%
+    layer_dense(units = 3, activation = 'softmax')
+
+# Compile the model
+model %>% compile(
+     loss = 'categorical_crossentropy',
+     optimizer = 'adam',
+     metrics = 'accuracy'
+ )
+
+# Save the training history in history
+history <- model %>% fit(
+  iris.training, iris.trainLabels,
+  epochs = 200, batch_size = 5,
+  validation_split = 0.2
+ )
+
+# Plot the model loss
+plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+lines(history$metrics$val_loss, col = "green")
+legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+# Plot the model accuracy
+plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+lines(history$metrics$val_acc, col = "green")
+legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+############ HIDDEN LAYER EVALUATIONS
+
+# Initialize the sequential model
+model <- keras_model_sequential()
+
+# Add layers to the model
+model %>%
+    layer_dense(units = 28, activation = 'relu', input_shape = c(4)) %>%
+    layer_dense(units = 3, activation = 'softmax')
+
+# Compile the model
+model %>% compile(
+     loss = 'categorical_crossentropy',
+     optimizer = 'adam',
+     metrics = 'accuracy'
+ )
+
+# Save the training history in the history variable
+history <- model %>% fit(
+  iris.training, iris.trainLabels,
+  epochs = 200, batch_size = 5,
+  validation_split = 0.2
+ )
+
+# Plot the model loss
+plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+lines(history$metrics$val_loss, col = "green")
+legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+# Plot the model accuracy
+plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+lines(history$metrics$val_acc, col = "green")
+legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
 
 ####################################
 # Feature Selections
