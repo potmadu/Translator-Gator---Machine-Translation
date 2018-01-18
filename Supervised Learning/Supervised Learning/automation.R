@@ -447,10 +447,10 @@ hitungSoftmax = function(train_data,test_data) {
 
     # Add layers to the model
     # BEST RESULTS 1 hidden 180 units : 77.80%
-    # 2 hidden: 180 units + 90 units : 78.49968%
+    # 2 hidden: 180 relu units + 90 relu units : 78.49968%
     model %>%
-    layer_dense(units = 180, activation = 'relu', input_shape = c(90)) %>%
-    layer_dense(units = 90, activation = 'relu') %>%
+    layer_dense(units = 70, activation = 'relu', input_shape = c(90)) %>%
+    layer_dense(units = 35, activation = 'relu') %>%
     layer_dense(units = 5, activation = 'softmax');
 
     # Compile the model
@@ -469,27 +469,6 @@ hitungSoftmax = function(train_data,test_data) {
      validation_split = 0.2
     )
 
-    # Plot the history
-    plot(history)
-
-    # Plot the model loss of the training data
-    plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
-
-    # Plot the model loss of the test data
-    lines(history$metrics$val_loss, col = "green")
-
-    # Add legend
-    legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
-
-    # Plot the accuracy of the training data 
-    plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
-
-    # Plot the accuracy of the validation data
-    lines(history$metrics$val_acc, col = "green")
-
-    # Add Legend
-    legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
-
     # Predict the classes for the test data
     classes = model %>% predict_classes(test_data_matrix_wTarget, batch_size = 128)
 
@@ -503,6 +482,28 @@ hitungSoftmax = function(train_data,test_data) {
 
 }
 
+# Plot the history
+plot(history)
+
+# Plot the model loss of the training data
+plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+
+# Plot the model loss of the test data
+lines(history$metrics$val_loss, col = "green")
+
+# Add legend
+legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+# Plot the accuracy of the training data 
+plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+
+# Plot the accuracy of the validation data
+lines(history$metrics$val_acc, col = "green")
+
+# Add Legend
+legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+
+
 #################################
 # Main Program
 #################################
@@ -510,16 +511,18 @@ hitungSoftmax = function(train_data,test_data) {
 library(imputeTS);
 library(dplyr);
 
-train_file = "Training Data.csv";
-test_file = "Test Data.csv";
+train_file_action = "Training Data 1601 - Drop Column.csv";
+test_file_action = "Test Data 1601 - Drop Column.csv";
+train_file_word = "Training Data 1601 - Aggregated.csv";
+test_file_word = "Test Data 1601 - Aggregated.csv";
 target_column = "manual_assessment";
 
-train_data = baca(train_file);
+train_data = baca(train_file_action);
 colnames(train_data)[colnames(train_data) == target_column] = "respon";
 train_data$manual_origin_source = NULL;
 train_data$origin_mean_vote_up = NULL;
 
-test_data = baca(test_file);
+test_data = baca(test_file_action);
 colnames(test_data)[colnames(test_data) == target_column] = "respon";
 test_data$manual_origin_source = NULL;
 test_data$origin_mean_vote_up = NULL;

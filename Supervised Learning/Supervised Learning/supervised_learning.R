@@ -51,8 +51,8 @@ library(e1071);
 train_data_back = train_data;
 test_data_back = test_data;
 
-train_data = train_dataset1_normMDA;
-test_data = test_dataset1_normMDA;
+train_data = train_dataset1_norm;
+test_data = test_dataset1_norm;
 
 train_data5 = subset(train_data, respon == 5, select = -respon);
 train_data54 = subset(train_data, respon >= 4, select = -respon);
