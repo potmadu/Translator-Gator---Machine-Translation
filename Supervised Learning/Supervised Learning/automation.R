@@ -449,8 +449,7 @@ hitungSoftmax = function(train_data,test_data) {
     # BEST RESULTS 1 hidden 180 units : 77.80%
     # 2 hidden: 180 relu units + 90 relu units : 78.49968%
     model %>%
-    layer_dense(units = 70, activation = 'relu', input_shape = c(90)) %>%
-    layer_dense(units = 35, activation = 'relu') %>%
+    layer_dense(units = 180, activation = 'relu', input_shape = c(90)) %>%
     layer_dense(units = 5, activation = 'softmax');
 
     # Compile the model
@@ -511,21 +510,23 @@ legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1
 library(imputeTS);
 library(dplyr);
 
-train_file_action = "Training Data 1601 - Drop Column.csv";
-test_file_action = "Test Data 1601 - Drop Column.csv";
-train_file_word = "Training Data 1601 - Aggregated.csv";
-test_file_word = "Test Data 1601 - Aggregated.csv";
-target_column = "manual_assessment";
+train_file_action = "Training Data 1901 - Drop Column.csv";
+test_file_action = "Test Data 1901 - Drop Column.csv";
+train_file_word = "Training Data 1801 - Aggregated.csv";
+test_file_word = "Test Data 1801 - Aggregated.csv";
+target_column = "manual_assessment_avg";
 
 train_data = baca(train_file_action);
 colnames(train_data)[colnames(train_data) == target_column] = "respon";
-train_data$manual_origin_source = NULL;
-train_data$origin_mean_vote_up = NULL;
+train_data$source.word = NULL;
+train_data$target.word = NULL;
+train_data$X = NULL;
 
 test_data = baca(test_file_action);
 colnames(test_data)[colnames(test_data) == target_column] = "respon";
-test_data$manual_origin_source = NULL;
-test_data$origin_mean_vote_up = NULL;
+test_data$source.word = NULL;
+test_data$target.word = NULL;
+test_data$X = NULL;
 
 train_data %>%
 filter(is.na(respon) | is.na(origin_word_entropy)) %>%

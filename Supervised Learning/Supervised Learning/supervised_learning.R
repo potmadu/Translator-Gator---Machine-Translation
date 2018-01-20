@@ -51,8 +51,8 @@ library(e1071);
 train_data_back = train_data;
 test_data_back = test_data;
 
-train_data = train_dataset1_norm;
-test_data = test_dataset1_norm;
+train_data = train_dataset1_normMDA;
+test_data = test_dataset1_normMDA;
 
 train_data5 = subset(train_data, respon == 5, select = -respon);
 train_data54 = subset(train_data, respon >= 4, select = -respon);
@@ -680,6 +680,9 @@ importances = rbind(importances, importances[1,]);
 meanMDA = mean(importances$MeanDecreaseAccuracy);
 meanMDG = mean(importances$MeanDecreaseGini);
 
+q1MDA = quantile(importances$MeanDecreaseAccuracy)[2];
+q1MDG = quantile(importances$MeanDecreaseGini)[2];
+
 q3MDA = quantile(importances$MeanDecreaseAccuracy)[4];
 q3MDG = quantile(importances$MeanDecreaseGini)[4];
 
@@ -714,6 +717,8 @@ importances$threshMDG[importances$MeanDecreaseGini >= meanMDA] = 1;
 
 featuresMDA = subset(importances, threshMDA == 1);
 featuresMDG = subset(importances, threshMDG == 1);
+
+featuresMDA %>% arrange(-MeanDecreaseAccuracy) %>% select(kolom, MeanDecreaseAccuracy) %>% as.data.frame();
 
 namaMDA = featuresMDA$kolom;
 namaMDG = featuresMDG$kolom;
