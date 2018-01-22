@@ -25,6 +25,9 @@ test_data$source.word = NULL;
 test_data$target.word = NULL;
 test_data$X = NULL;
 
+nrow(train_data);
+nrow(test_data);
+
 train_data %>%
 filter(is.na(respon) | is.na(origin_word_entropy)) %>%
 group_by(origin_word_entropy, respon) %>%
@@ -63,6 +66,9 @@ colnames(test_dataset1_assessed)[colSums(is.na(test_dataset1_assessed)) > 0]
 test_dataset1_norm = na.replace(test_dataset1_assessed, 0);
 colnames(test_dataset1_norm)[colSums(is.na(test_dataset1_norm)) > 0];
 
+nrow(train_dataset1_norm);
+nrow(test_dataset1_norm);
+
 hasil = fsRandomForest(modelRandomForest, train_dataset1_norm, test_dataset1_norm);
 
 ######### KALKULASI
@@ -86,4 +92,7 @@ hitungNaiveBayes(train_dataset1_normMDG, test_dataset1_normMDG);
 hitungDecisionTree(train_dataset1_normMDG, test_dataset1_normMDG);
 
 hitungSoftmax(train_dataset1_norm, test_dataset1_norm);
+
+modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
+
 
