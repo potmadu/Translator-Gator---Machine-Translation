@@ -133,6 +133,94 @@ akurasiCumSVM = function(models,test_data) {
 
 }
 
+predCumSVM = function(models, test_data) {
+
+    print("Pred CumSVM");
+
+    model5 = models$model5;
+    model54 = models$model54;
+    model543 = models$model543;
+    model5432 = models$model5432;
+
+    pred5 = predict(model5, subset(test_data, select = -respon));
+    pred4 = predict(model54, subset(test_data, select = -respon));
+    pred3 = predict(model543, subset(test_data, select = -respon));
+    pred2 = predict(model5432, subset(test_data, select = -respon));
+
+    preds = data.frame(pred5, pred4, pred3, pred2);
+    preds$pred = -1;
+
+    for (i in 1:nrow(preds)) {
+        if (preds$pred5[i]) {
+            preds$pred[i] = 5;
+        } else {
+            if (preds$pred4[i]) {
+                preds$pred[i] = 4;
+            } else {
+                if (preds$pred3[i]) {
+                    preds$pred[i] = 3;
+                } else {
+                    if (preds$pred2[i]) {
+                        preds$pred[i] = 2;
+                    } else {
+                        preds$pred[i] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    preds$target = test_data$respon;
+
+    return(preds$pred);
+
+}
+
+aucCumSVM = function(models, test_data) {
+
+    print("AUC CumSVM");
+
+    model5 = models$model5;
+    model54 = models$model54;
+    model543 = models$model543;
+    model5432 = models$model5432;
+
+    pred5 = predict(model5, subset(test_data, select = -respon));
+    pred4 = predict(model54, subset(test_data, select = -respon));
+    pred3 = predict(model543, subset(test_data, select = -respon));
+    pred2 = predict(model5432, subset(test_data, select = -respon));
+
+    preds = data.frame(pred5, pred4, pred3, pred2);
+    preds$pred = -1;
+
+    for (i in 1:nrow(preds)) {
+        if (preds$pred5[i]) {
+            preds$pred[i] = 5;
+        } else {
+            if (preds$pred4[i]) {
+                preds$pred[i] = 4;
+            } else {
+                if (preds$pred3[i]) {
+                    preds$pred[i] = 3;
+                } else {
+                    if (preds$pred2[i]) {
+                        preds$pred[i] = 2;
+                    } else {
+                        preds$pred[i] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    preds$target = test_data$respon;
+
+    auc_value = auc(test_data$respon, preds$pred);
+
+    return(auc_value);
+
+}
+
 hitungSVM = function(input_data,target_respon,nu_value) {
 
     library(e1071);
@@ -391,6 +479,27 @@ akurasiCHAID = function(model,test_data) {
 
 }
 
+predCHAID = function(model, test_data) {
+
+    print("Pred CHAID");
+
+    pred = predict(model, newdata = test_data);
+    
+    return(pred);
+
+}
+
+aucCHAID = function(model, test_data) {
+
+    print("AUC CHAID");
+
+    pred = predict(model, newdata = test_data);
+    auc_value = auc(test_data$respon,pred);
+
+    return(auc_value);
+
+}
+
 trainCART = function(train_data) {
 
     train_data$respon = as.factor(train_data$respon);
@@ -417,6 +526,31 @@ akurasiCART = function(model,test_data) {
 
 }
 
+predCART = function(model, test_data) {
+
+    print("Pred CART");
+
+    test_data$respon = as.factor(test_data$respon);
+
+    pred = predict(model, test_data, type = "class");
+
+    return(pred);
+
+}
+
+aucCART = function(model, test_data) {
+
+    print("AUC CART");
+
+    test_data$respon = as.factor(test_data$respon);
+
+    pred = predict(model, test_data, type = "class");
+    auc_value = auc(test_data$respon,pred);
+
+    return(auc_value);
+
+}
+
 trainC50 = function(train_data) {
 
     train_data$respon = as.factor(train_data$respon);
@@ -440,6 +574,27 @@ akurasiC50 = function(model,test_data) {
     akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
 
     return(akurasi);
+
+}
+
+predC50 = function(model, test_data) {
+
+    print("Pred C50");
+
+    pred = predict(model, test_data);
+
+    return(pred);
+
+}
+
+aucC50 = function(model, test_data) {
+
+    print("AUC C50");
+
+    pred = predict(model, test_data);
+    auc_value = auc(test_data$respon,pred);
+
+    return(auc_value);
 
 }
 
@@ -471,6 +626,27 @@ akurasiRandomForest = function(model,test_data) {
 
 }
 
+predRandomForest = function(model, test_data) {
+
+    print("Pred Random Forest");
+
+    pred = predict(model, newdata = test_data);
+
+    return(pred);
+
+}
+
+aucRandomForest = function(model, test_data) {
+
+    print("AUC Random Forest");
+
+    pred = predict(model, newdata = test_data);
+    auc_value = auc(pred, test_data$respon);
+
+    return(auc_value);
+
+}
+
 trainNaiveBayes = function(train_data) {
 
     print("Train Naive Bayes");
@@ -486,7 +662,17 @@ trainNaiveBayes = function(train_data) {
 
 }
 
-akurasiNaiveBayes = function(model,test_data) {
+predNaiveBayes = function(model,test_data) {
+
+    print("Pred Naive Bayes");
+
+    pred = predict(model, newdata = subset(test_data, select = -respon));
+
+    return(pred);
+
+}
+
+akurasiNaiveBayes = function(model, test_data) {
 
     print("Akurasi Naive Bayes");
 
@@ -494,6 +680,17 @@ akurasiNaiveBayes = function(model,test_data) {
     akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
 
     return(akurasi);
+
+}
+
+aucNaiveBayes = function(model, test_data) {
+
+    print("AUC Naive Bayes");
+
+    pred = predict(model, newdata = subset(test_data, select = -respon));
+    auc_value = auc(test_data$respon,pred);
+
+    return(auc_value);
 
 }
 
@@ -657,7 +854,7 @@ fsRandomForest = function(modelRandomForest,train_data,test_data) {
     importances$kolom = kolom_train_data;
     importances = rbind(importances, importances[1,]);
 
-    samples = seq(0, 0.95, 0.1);
+    samples = seq(0, 0.9, 0.1);
 
     output = data.frame(samples);
     output$randomforestMDA = -1;
@@ -751,3 +948,248 @@ fsRandomForest = function(modelRandomForest,train_data,test_data) {
     return(output);
 
 }
+
+fsRandomForest_AccuracyAndROC = function(modelRandomForest, train_data, test_data) {
+
+    library(pROC);
+
+    importances = data.frame(importance(modelRandomForest));
+    kolom_train_data = colnames(train_data)[1:ncol(train_data) - 1];
+    importances$kolom = kolom_train_data;
+    importances = rbind(importances, importances[1,]);
+
+    #samples = seq(0, 0.9, 0.1);
+    samples = 0.9;
+
+    output = data.frame(samples);
+
+    output$randomforestMDA_12 = -1;
+    output$randomforestMDA_23 = -1;
+    output$randomforestMDA_34 = -1;
+    output$randomforestMDA_45 = -1;
+
+    output$randomforestMDG_12 = -1;
+    output$randomforestMDG_23 = -1;
+    output$randomforestMDG_34 = -1;
+    output$randomforestMDG_45 = -1;
+
+    output$chaidMDA_12 = -1;
+    output$chaidMDA_23 = -1;
+    output$chaidMDA_34 = -1;
+    output$chaidMDA_45 = -1;
+
+    output$chaidMDG_12 = -1;
+    output$chaidMDG_23 = -1;
+    output$chaidMDG_34 = -1;
+    output$chaidMDG_45 = -1;
+
+    output$cartMDA_12 = -1;
+    output$cartMDA_23 = -1;
+    output$cartMDA_34 = -1;
+    output$cartMDA_45 = -1;
+
+    output$cartMDG_12 = -1;
+    output$cartMDG_23 = -1;
+    output$cartMDG_34 = -1;
+    output$cartMDG_45 = -1;
+
+    output$c50MDA_12 = -1;
+    output$c50MDA_23= -1;
+    output$c50MDA_34 = -1;
+    output$c50MDA_45 = -1;
+
+    output$c50MDG_12 = -1;
+    output$c50MDG_23 = -1;
+    output$c50MDG_34 = -1;
+    output$c50MDG_45 = -1;
+
+    output$naivebayesMDA_12 = -1;
+    output$naivebayesMDA_23 = -1;
+    output$naivebayesMDA_34 = -1;
+    output$naivebayesMDA_45 = -1;
+
+    output$naivebayesMDG_12 = -1;
+    output$naivebayesMDG_23 = -1;
+    output$naivebayesMDG_34 = -1;
+    output$naivebayesMDG_45 = -1;
+
+    output$svmMDA_12 = -1;
+    output$svmMDA_23 = -1;
+    output$svmMDA_34 = -1;
+    output$svmMDA_45 = -1;
+
+    output$svmMDG_12 = -1;
+    output$svmMDG_23 = -1;
+    output$svmMDG_34 = -1;
+    output$svmMDG_45 = -1;
+
+    iter = 1;
+
+    for (i in samples) {
+
+        threshMDA = quantile(importances$MeanDecreaseAccuracy, i);
+        threshMDG = quantile(importances$MeanDecreaseGini, i);
+
+        importances$threshMDA = 0;
+        importances$threshMDG = 0;
+
+        importances$threshMDA[importances$MeanDecreaseAccuracy >= threshMDA] = 1;
+        importances$threshMDG[importances$MeanDecreaseGini >= threshMDG] = 1;
+
+        featuresMDA = subset(importances, threshMDA == 1);
+        featuresMDG = subset(importances, threshMDG == 1);
+
+        namaMDA = featuresMDA$kolom;
+        namaMDG = featuresMDG$kolom;
+
+        train_dataset1_normMDA = train_data %>%
+        select(namaMDA) %>%
+        as.data.frame();
+
+        train_dataset1_normMDA$respon = train_data$respon;
+
+        train_dataset1_normMDG = train_data %>%
+        select(namaMDG) %>%
+        as.data.frame();
+
+        train_dataset1_normMDG$respon = train_data$respon;
+
+        test_dataset1_normMDA = test_data %>%
+        select(namaMDA) %>%
+        as.data.frame();
+
+        test_dataset1_normMDA$respon = test_data$respon;
+
+        test_dataset1_normMDG = test_data %>%
+        select(namaMDG) %>%
+        as.data.frame();
+
+        test_dataset1_normMDG$respon = test_data$respon;
+
+        modelRF_MDA = trainRandomForest(train_dataset1_normMDA);
+        modelCHAID_MDA = trainCHAID(train_dataset1_normMDA);
+        modelCART_MDA = trainCART(train_dataset1_normMDA);
+        modelC50_MDA = trainC50(train_dataset1_normMDA);
+        modelNB_MDA = trainNaiveBayes(train_dataset1_normMDA);
+        modelSVM_MDA = trainCumSVM(train_dataset1_normMDA);
+
+        modelRF_MDG = trainRandomForest(train_dataset1_normMDG);
+        modelCHAID_MDG = trainCHAID(train_dataset1_normMDG);
+        modelCART_MDG = trainCART(train_dataset1_normMDG);
+        modelC50_MDG = trainC50(train_dataset1_normMDG);
+        modelNB_MDG = trainNaiveBayes(train_dataset1_normMDG);
+        modelSVM_MDG = trainCumSVM(train_dataset1_normMDG);
+
+        hasilMDA = data.frame(test_dataset1_normMDA$respon);
+        colnames(hasilMDA) = c("respon");
+        hasilMDG = data.frame(test_dataset1_normMDG$respon);
+        colnames(hasilMDG) = c("respon");
+
+        hasilMDA$predRF = predRandomForest(modelRF_MDA, test_dataset1_normMDA);
+        hasilMDA$predCHAID = predCHAID(modelCHAID_MDA, test_dataset1_normMDA);
+        hasilMDA$predCART = predCART(modelCART_MDA, test_dataset1_normMDA);
+        hasilMDA$predC50 = predC50(modelC50_MDA, test_dataset1_normMDA);
+        hasilMDA$predNB = predNaiveBayes(modelNB_MDA, test_dataset1_normMDA);
+        hasilMDA$predSVM = predCumSVM(modelSVM_MDA, test_dataset1_normMDA);
+
+        hasilMDG$predRF = predRandomForest(modelRF_MDG, test_dataset1_normMDG);
+        hasilMDG$predCHAID = predCHAID(modelCHAID_MDG, test_dataset1_normMDG);
+        hasilMDG$predCART = predCART(modelCART_MDG, test_dataset1_normMDG);
+        hasilMDG$predC50 = predC50(modelC50_MDG, test_dataset1_normMDG);
+        hasilMDG$predNB = predNaiveBayes(modelNB_MDG, test_dataset1_normMDG);
+        hasilMDG$predSVM = predCumSVM(modelSVM_MDG, test_dataset1_normMDG);
+
+        test_dataset1_MDA12 = subset(test_dataset1_normMDA,respon==1 | respon==2);
+        test_dataset1_MDA23 = subset(test_dataset1_normMDA, respon == 2 | respon == 3);
+        test_dataset1_MDA34 = subset(test_dataset1_normMDA, respon == 3 | respon == 4);
+        test_dataset1_MDA45 = subset(test_dataset1_normMDA, respon == 4 | respon == 5);
+
+        test_dataset1_MDG12 = subset(test_dataset1_normMDG, respon == 1 | respon == 2);
+        test_dataset1_MDG23 = subset(test_dataset1_normMDG, respon == 2 | respon == 3);
+        test_dataset1_MDG34 = subset(test_dataset1_normMDG, respon == 3 | respon == 4);
+        test_dataset1_MDG45 = subset(test_dataset1_normMDG, respon == 4 | respon == 5);
+
+        output$randomforestMDA[iter] = akurasiRandomForest(modelRF_MDA, test_dataset1_normMDA);
+        output$chaidMDA[iter] = akurasiCHAID(modelCHAID_MDA, test_dataset1_normMDA);
+        output$cartMDA[iter] = akurasiCART(modelCART_MDA, test_dataset1_normMDA);
+        output$c50MDA[iter] = akurasiC50(modelC50_MDA, test_dataset1_normMDA);
+        output$naivebayesMDA[iter] = akurasiNaiveBayes(modelNB_MDA, test_dataset1_normMDA);
+        output$svmMDA[iter] = akurasiCumSVM(modelSVM_MDA, test_dataset1_normMDA);
+
+        output$randomforestMDG[iter] = akurasiRandomForest(modelRF_MDG, test_dataset1_normMDG);
+        output$chaidMDG[iter] = akurasiCHAID(modelCHAID_MDG, test_dataset1_normMDG);
+        output$cartMDG[iter] = akurasiCART(modelCART_MDG, test_dataset1_normMDG);
+        output$c50MDG[iter] = akurasiC50(modelC50_MDG, test_dataset1_normMDG);
+        output$naivebayesMDG[iter] = akurasiNaiveBayes(modelNB_MDG, test_dataset1_normMDG);
+        output$svmMDG[iter] = akurasiCumSVM(modelSVM_MDG, test_dataset1_normMDG);
+
+        #AUC
+
+        output$randomforestMDA_12[iter] = aucRandomForest(modelRF_MDA, test_dataset1_normMDA12);
+        output$randomforestMDA_23[iter] = aucRandomForest(modelRF_MDA, test_dataset1_normMDA23);
+        output$randomforestMDA_34[iter] = aucRandomForest(modelRF_MDA, test_dataset1_normMDA34);
+        output$randomforestMDA_45[iter] = aucRandomForest(modelRF_MDA, test_dataset1_normMDA45);
+
+        output$randomforestMDG_12[iter] = aucRandomForest(modelRF_MDG, test_dataset1_normMDG12);
+        output$randomforestMDG_23[iter] = aucRandomForest(modelRF_MDG, test_dataset1_normMDG23);
+        output$randomforestMDG_34[iter] = aucRandomForest(modelRF_MDG, test_dataset1_normMDG34);
+        output$randomforestMDG_45[iter] = aucRandomForest(modelRF_MDG, test_dataset1_normMDG45);
+
+        output$chaidMDA_12[iter] = aucCHAID(modelCHAID_MDA, test_dataset1_normMDA12);
+        output$chaidMDA_23[iter] = aucCHAID(modelCHAID_MDA, test_dataset1_normMDA23);
+        output$chaidMDA_34[iter] = aucCHAID(modelCHAID_MDA, test_dataset1_normMDA34);
+        output$chaidMDA_45[iter] = aucCHAID(modelCHAID_MDA, test_dataset1_normMDA45);
+
+        output$chaidMDG_12[iter] = aucCHAID(modelCHAID_MDG, test_dataset1_normMDG12);
+        output$chaidMDG_23[iter] = aucCHAID(modelCHAID_MDG, test_dataset1_normMDG23);
+        output$chaidMDG_34[iter] = aucCHAID(modelCHAID_MDG, test_dataset1_normMDG34);
+        output$chaidMDG_45[iter] = aucCHAID(modelCHAID_MDG, test_dataset1_normMDG45);
+
+        output$cartMDA_12[iter] = aucCART(modelCART_MDA, test_dataset1_normMDA12);
+        output$cartMDA_23[iter] = aucCART(modelCART_MDA, test_dataset1_normMDA23);
+        output$cartMDA_34[iter] = aucCART(modelCART_MDA, test_dataset1_normMDA34);
+        output$cartMDA_45[iter] = aucCART(modelCART_MDA, test_dataset1_normMDA45);
+        
+        output$cartMDG_12[iter] = aucCART(modelCART_MDG, test_dataset1_normMDG12);
+        output$cartMDG_23[iter] = aucCART(modelCART_MDG, test_dataset1_normMDG23);
+        output$cartMDG_34[iter] = aucCART(modelCART_MDG, test_dataset1_normMDG34);
+        output$cartMDG_45[iter] = aucCART(modelCART_MDG, test_dataset1_normMDG45);
+        
+        output$c50MDA_12[iter] = aucC50(modelC50_MDA, test_dataset1_normMDA12);
+        output$c50MDA_23[iter] = aucC50(modelC50_MDA, test_dataset1_normMDA23);
+        output$c50MDA_34[iter] = aucC50(modelC50_MDA, test_dataset1_normMDA34);
+        output$c50MDA_45[iter] = aucC50(modelC50_MDA, test_dataset1_normMDA45);
+
+        output$c50MDG_12[iter] = aucC50(modelC50_MDG, test_dataset1_normMDG12);
+        output$c50MDG_23[iter] = aucC50(modelC50_MDG, test_dataset1_normMDG23);
+        output$c50MDG_34[iter] = aucC50(modelC50_MDG, test_dataset1_normMDG34);
+        output$c50MDG_45[iter] = aucC50(modelC50_MDG, test_dataset1_normMDG45);
+
+        output$naivebayesMDA_12[iter] = aucNaiveBayes(modelNB_MDA, test_dataset1_normMDA12);
+        output$naivebayesMDA_23[iter] = aucNaiveBayes(modelNB_MDA, test_dataset1_normMDA23);
+        output$naivebayesMDA_34[iter] = aucNaiveBayes(modelNB_MDA, test_dataset1_normMDA34);
+        output$naivebayesMDA_45[iter] = aucNaiveBayes(modelNB_MDA, test_dataset1_normMDA45);
+
+        output$naivebayesMDG_12[iter] = aucNaiveBayes(modelNB_MDG, test_dataset1_normMDG12);
+        output$naivebayesMDG_23[iter] = aucNaiveBayes(modelNB_MDG, test_dataset1_normMDG23);
+        output$naivebayesMDG_34[iter] = aucNaiveBayes(modelNB_MDG, test_dataset1_normMDG34);
+        output$naivebayesMDG_45[iter] = aucNaiveBayes(modelNB_MDG, test_dataset1_normMDG45);
+
+        output$svmMDA_12[iter] = aucCumSVM(modelSVM_MDA, test_dataset1_normMDA12);
+        output$svmMDA_23[iter] = aucCumSVM(modelSVM_MDA, test_dataset1_normMDA23);
+        output$svmMDA_34[iter] = aucCumSVM(modelSVM_MDA, test_dataset1_normMDA34);
+        output$svmMDA_45[iter] = aucCumSVM(modelSVM_MDA, test_dataset1_normMDA45);
+
+        output$svmMDG_12[iter] = aucCumSVM(modelSVM_MDG, test_dataset1_normMDG12);
+        output$svmMDG_23[iter] = aucCumSVM(modelSVM_MDG, test_dataset1_normMDG23);
+        output$svmMDG_34[iter] = aucCumSVM(modelSVM_MDG, test_dataset1_normMDG34);
+        output$svmMDG_45[iter] = aucCumSVM(modelSVM_MDG, test_dataset1_normMDG45);
+
+        iter = iter + 1;
+
+    }
+
+    return(output);
+
+}
+

@@ -7,8 +7,8 @@ library(dplyr);
 
 source("automation.R");
 
-train_file_action = "Training Data 1901 - Drop Column.csv";
-test_file_action = "Test Data 1901 - Drop Column.csv";
+train_file_action = "Training Data 2201 - Drop Column - 3 Class.csv";
+test_file_action = "Test Data 2201 - Drop Column - 3 Class.csv";
 train_file_word = "Training Data 1801 - Aggregated.csv";
 test_file_word = "Test Data 1801 - Aggregated.csv";
 target_column = "manual_assessment_avg";
@@ -18,12 +18,18 @@ colnames(train_data)[colnames(train_data) == target_column] = "respon";
 train_data$source.word = NULL;
 train_data$target.word = NULL;
 train_data$X = NULL;
+train_data$manual_assessment = NULL;
+train_data$manual_assessment_2 = NULL;
+train_data$username = NULL;
 
 test_data = baca(test_file_action);
 colnames(test_data)[colnames(test_data) == target_column] = "respon";
 test_data$source.word = NULL;
 test_data$target.word = NULL;
 test_data$X = NULL;
+test_data$manual_assessment = NULL;
+test_data$manual_assessment_2 = NULL;
+test_data$username = NULL;
 
 nrow(train_data);
 nrow(test_data);
@@ -95,4 +101,15 @@ hitungSoftmax(train_dataset1_norm, test_dataset1_norm);
 
 modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
 
+modelNaiveBayes = trainNaiveBayes(train_dataset1_norm);
+aucNB = aucNaiveBayes(modelNaiveBayes, test_dataset1_norm);
 
+######### Backup Training Testing Data
+
+train_data_back = train_data;
+test_data_back = test_data;
+
+train_data = train_dataset1_norm;
+test_data = test_dataset1_norm;
+
+modelRandomForest = trainRandomForest(train_data);
