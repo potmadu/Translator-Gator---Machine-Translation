@@ -62,6 +62,77 @@ hitungSVM2 = function(train_data,test_data, target_respon, nu_value, gamma_value
 
 }
 
+trainCumSVM = function(train_data) {
+
+    print("Train CumSVM");
+
+    train_data5 = subset(train_data, respon == 5, select = -respon);
+    train_data54 = subset(train_data, respon >= 4, select = -respon);
+    train_data543 = subset(train_data, respon >= 3, select = -respon);
+    train_data5432 = subset(train_data, respon >= 2, select = -respon);
+
+    #Best nu=0.001, gamma=0.01 accuracy=78.03
+    #model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+    #model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+    #model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+    #model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.001, gamma = 0.1);
+
+    model5 = svm(train_data5, train_data5$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+    model54 = svm(train_data54, train_data54$respon, type = 'one-classification', nu = 0.1, gamma = 1);
+    model543 = svm(train_data543, train_data543$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+    model5432 = svm(train_data5432, train_data5432$respon, type = 'one-classification', nu = 0.1, gamma = 1);
+
+    models = list("model5" = model5, "model54" = model54, "model543" = model543, "model5432" = model5432);
+
+    return(models);
+
+}
+
+akurasiCumSVM = function(models,test_data) {
+
+    print("Akurasi CumSVM");
+
+    model5 = models$model5;
+    model54 = models$model54;
+    model543 = models$model543;
+    model5432 = models$model5432;
+
+    pred5 = predict(model5, subset(test_data, select = -respon));
+    pred4 = predict(model54, subset(test_data, select = -respon));
+    pred3 = predict(model543, subset(test_data, select = -respon));
+    pred2 = predict(model5432, subset(test_data, select = -respon));
+
+    preds = data.frame(pred5, pred4, pred3, pred2);
+    preds$pred = -1;
+
+    for (i in 1:nrow(preds)) {
+        if (preds$pred5[i]) {
+            preds$pred[i] = 5;
+        } else {
+            if (preds$pred4[i]) {
+                preds$pred[i] = 4;
+            } else {
+                if (preds$pred3[i]) {
+                    preds$pred[i] = 3;
+                } else {
+                    if (preds$pred2[i]) {
+                        preds$pred[i] = 2;
+                    } else {
+                        preds$pred[i] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    preds$target = test_data$respon;
+
+    akurasi = data.frame(confusionMatrix(preds$pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
+
+}
+
 hitungSVM = function(input_data,target_respon,nu_value) {
 
     library(e1071);
@@ -264,10 +335,7 @@ hitungSVM_multi2 = function(train_data,test_data, c_value, gamma_value) {
 
 }
 
-hitungDecisionTree = function(train_data,test_data) {
-
-    library(C50);
-    library(printr);
+trainDecisionTree = function(train_data,test_data) {
 
     train_data$respon = as.factor(train_data$respon);
     test_data$respon = as.factor(test_data$respon);
@@ -288,6 +356,9 @@ hitungDecisionTree = function(train_data,test_data) {
 
     print("C50");
 
+    library(C50);
+    library(printr);
+
     model = C5.0(respon ~ ., data = train_data);
     results = predict(object = model, newdata = test_data, type = "class");
     pred = predict(model, test_data);
@@ -295,7 +366,86 @@ hitungDecisionTree = function(train_data,test_data) {
 
 }
 
-hitungRandomForest = function(train_data, test_data) {
+trainCHAID = function(train_data) {
+
+    train_data$respon = as.factor(train_data$respon);
+    test_data$respon = as.factor(test_data$respon);
+
+    print("Train CHAID");
+
+    library(party);
+    model = ctree(respon ~ ., data = train_data);
+
+    return(model);
+
+}
+
+akurasiCHAID = function(model,test_data) {
+
+    print("Akurasi CHAID");
+
+    pred = predict(model, newdata = test_data);
+    akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
+
+}
+
+trainCART = function(train_data) {
+
+    train_data$respon = as.factor(train_data$respon);
+
+    print("Train CART");
+
+    library(rpart);
+    model = rpart(respon ~ ., data = train_data, method="class");
+
+    return(model);
+
+}
+
+akurasiCART = function(model,test_data) {
+
+    print("Akurasi CART");
+
+    test_data$respon = as.factor(test_data$respon);
+
+    pred = predict(model, test_data, type="class");
+    akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
+
+}
+
+trainC50 = function(train_data) {
+
+    train_data$respon = as.factor(train_data$respon);
+
+    print("Train C50");
+
+    library(C50);
+    library(printr);
+
+    model = C5.0(respon ~ ., data = train_data);
+
+    return(model);
+
+}
+
+akurasiC50 = function(model,test_data) {
+
+    print("Akurasi C50");
+
+    pred = predict(model, test_data);
+    akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
+
+}
+
+trainRandomForest = function(train_data) {
+
+    print("Train Random Forest");
 
     library(caret);
     library(randomForest);
@@ -305,15 +455,25 @@ hitungRandomForest = function(train_data, test_data) {
     test_data$respon = as.factor(test_data$respon);
 
     model = randomForest(respon ~ ., data = train_data,importance=TRUE);
-    pred = predict(model, newdata = test_data);
-    print(table(pred, test_data$respon));
-    print(confusionMatrix(pred, test_data$respon));
 
     return(model);
 
 }
 
-hitungNaiveBayes = function(train_data,test_data) {
+akurasiRandomForest = function(model,test_data) {
+
+    print("Akurasi Random Forest");
+
+    pred = predict(model, newdata = test_data);
+    akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
+
+}
+
+trainNaiveBayes = function(train_data) {
+
+    print("Train Naive Bayes");
 
     library(e1071);
 
@@ -321,10 +481,19 @@ hitungNaiveBayes = function(train_data,test_data) {
     test_data$respon = as.factor(test_data$respon);
 
     model = naiveBayes(respon ~ ., data = train_data)
-    pred = predict(model, newdata = subset(test_data, select = -respon));
 
-    print(table(pred, test_data$respon));
-    print(confusionMatrix(pred, test_data$respon));
+    return(model);
+
+}
+
+akurasiNaiveBayes = function(model,test_data) {
+
+    print("Akurasi Naive Bayes");
+
+    pred = predict(model, newdata = subset(test_data, select = -respon));
+    akurasi = data.frame(confusionMatrix(pred, test_data$respon)$overall)[1, 1];
+
+    return(akurasi);
 
 }
 
@@ -415,7 +584,7 @@ normalize <- function(x) {
 };
 
 
-hitungSoftmax = function(train_data,test_data) {
+trainSoftmax = function(train_data,test_data) {
 
     library(keras);
 
@@ -481,119 +650,104 @@ hitungSoftmax = function(train_data,test_data) {
 
 }
 
-# Plot the history
-plot(history)
+fsRandomForest = function(modelRandomForest,train_data,test_data) {
 
-# Plot the model loss of the training data
-plot(history$metrics$loss, main = "Model Loss", xlab = "epoch", ylab = "loss", col = "blue", type = "l")
+    importances = data.frame(importance(modelRandomForest));
+    kolom_train_data = colnames(train_data)[1:ncol(train_data) - 1];
+    importances$kolom = kolom_train_data;
+    importances = rbind(importances, importances[1,]);
 
-# Plot the model loss of the test data
-lines(history$metrics$val_loss, col = "green")
+    samples = seq(0, 0.95, 0.1);
 
-# Add legend
-legend("topright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+    output = data.frame(samples);
+    output$randomforestMDA = -1;
+    output$svmMDA = -1;   
+    output$chaidMDA = -1;
+    output$cartMDA = -1;
+    output$c50MDA = -1;
+    output$naivebayesMDA = -1;
+    output$randomforestMDG = -1;
+    output$svmMDG = -1;
+    output$chaidMDG = -1;
+    output$cartMDG = -1;
+    output$c50MDG = -1;
+    output$naivebayesMDG = -1;
 
-# Plot the accuracy of the training data 
-plot(history$metrics$acc, main = "Model Accuracy", xlab = "epoch", ylab = "accuracy", col = "blue", type = "l")
+    iter = 1;
 
-# Plot the accuracy of the validation data
-lines(history$metrics$val_acc, col = "green")
+    for (i in samples) {
 
-# Add Legend
-legend("bottomright", c("train", "test"), col = c("blue", "green"), lty = c(1, 1))
+        threshMDA = quantile(importances$MeanDecreaseAccuracy, i);
+        threshMDG = quantile(importances$MeanDecreaseGini, i);
+        
+        importances$threshMDA = 0;
+        importances$threshMDG = 0;
 
+        importances$threshMDA[importances$MeanDecreaseAccuracy >= threshMDA] = 1;
+        importances$threshMDG[importances$MeanDecreaseGini >= threshMDG] = 1;
 
-#################################
-# Main Program
-#################################
+        featuresMDA = subset(importances, threshMDA == 1);
+        featuresMDG = subset(importances, threshMDG == 1);
 
-library(imputeTS);
-library(dplyr);
+        namaMDA = featuresMDA$kolom;
+        namaMDG = featuresMDG$kolom;
 
-train_file_action = "Training Data 1901 - Drop Column.csv";
-test_file_action = "Test Data 1901 - Drop Column.csv";
-train_file_word = "Training Data 1801 - Aggregated.csv";
-test_file_word = "Test Data 1801 - Aggregated.csv";
-target_column = "manual_assessment_avg";
+        train_dataset1_normMDA = train_data %>%
+        select(namaMDA) %>%
+        as.data.frame();
 
-train_data = baca(train_file_action);
-colnames(train_data)[colnames(train_data) == target_column] = "respon";
-train_data$source.word = NULL;
-train_data$target.word = NULL;
-train_data$X = NULL;
+        train_dataset1_normMDA$respon = train_data$respon;
 
-test_data = baca(test_file_action);
-colnames(test_data)[colnames(test_data) == target_column] = "respon";
-test_data$source.word = NULL;
-test_data$target.word = NULL;
-test_data$X = NULL;
+        train_dataset1_normMDG = train_data %>%
+        select(namaMDG) %>%
+        as.data.frame();
 
-train_data %>%
-filter(is.na(respon) | is.na(origin_word_entropy)) %>%
-group_by(origin_word_entropy, respon) %>%
-summarise(jumlah_data = n());
+        train_dataset1_normMDG$respon = train_data$respon;
 
-#| is.na(manual_origin_source)
+        test_dataset1_normMDA = test_data %>%
+        select(namaMDA) %>%
+        as.data.frame();
 
-#Dataset1 = manual_assessment as target
-train_dataset1 = train_data;
-test_dataset1 = test_data;
+        test_dataset1_normMDA$respon = test_data$respon;
 
-#Data Preprocessing
-train_dataset1$username = NULL;
-train_dataset1$source.word = NULL;
-train_dataset1$target.word = NULL;
-train_dataset1_assessed = train_dataset1 %>%
-filter(!is.na(respon) & !is.na(origin_word_entropy)) %>%
-as.data.frame();
-#check na value
-colnames(train_dataset1_assessed)[colSums(is.na(train_dataset1_assessed)) > 0]
-#normalization by replace NA with 0
-train_dataset1_norm = na.replace(train_dataset1_assessed, 0);
-colnames(train_dataset1_norm)[colSums(is.na(train_dataset1_norm)) > 0]
+        test_dataset1_normMDG = test_data %>%
+        select(namaMDG) %>%
+        as.data.frame();
 
-test_dataset1$username = NULL;
-test_dataset1$source.word = NULL;
-test_dataset1$target.word = NULL;
-test_dataset1_assessed = test_dataset1 %>%
-filter(!is.na(respon) & !is.na(origin_word_entropy)) %>%
-as.data.frame();
-#& !is.na(manual_origin_source)
+        test_dataset1_normMDG$respon = test_data$respon;
 
-#check na value
-colnames(test_dataset1_assessed)[colSums(is.na(test_dataset1_assessed)) > 0]
-#normalization by replace NA with 0
-test_dataset1_norm = na.replace(test_dataset1_assessed, 0);
-colnames(test_dataset1_norm)[colSums(is.na(test_dataset1_norm)) > 0]
+        modelRF_MDA = trainRandomForest(train_dataset1_normMDA);
+        modelCHAID_MDA = trainCHAID(train_dataset1_normMDA);
+        modelCART_MDA = trainCART(train_dataset1_normMDA);
+        modelC50_MDA = trainC50(train_dataset1_normMDA);
+        modelNB_MDA = trainNaiveBayes(train_dataset1_normMDA);
+        modelSVM_MDA = trainCumSVM(train_dataset1_normMDA);
 
-######### KALKULASI
+        modelRF_MDG = trainRandomForest(train_dataset1_normMDG);
+        modelCHAID_MDG = trainCHAID(train_dataset1_normMDG);
+        modelCART_MDG = trainCART(train_dataset1_normMDG);
+        modelC50_MDG = trainC50(train_dataset1_normMDG);
+        modelNB_MDG = trainNaiveBayes(train_dataset1_normMDG);
+        modelSVM_MDG = trainCumSVM(train_dataset1_normMDG);
 
-hitungFeaturesImportance(train_dataset1_norm,test_dataset1_norm);
+        output$randomforestMDA[iter] = akurasiRandomForest(modelRF_MDA, test_dataset1_normMDA);
+        output$chaidMDA[iter] = akurasiCHAID(modelCHAID_MDA, test_dataset1_normMDA);
+        output$cartMDA[iter] = akurasiCART(modelCART_MDA, test_dataset1_normMDA);
+        output$c50MDA[iter] = akurasiC50(modelC50_MDA, test_dataset1_normMDA);
+        output$naivebayesMDA[iter] = akurasiNaiveBayes(modelNB_MDA, test_dataset1_normMDA);
+        output$svmMDA[iter] = akurasiCumSVM(modelSVM_MDA, test_dataset1_normMDA);
 
-modelSVM = hitungSVM(dataset1_part, 5, 0.1);
-modelSVM2 = hitungSVM2(train_dataset1_norm, test_dataset1_norm, 5, 0.1, 0.001);
+        output$randomforestMDG[iter] = akurasiRandomForest(modelRF_MDG, test_dataset1_normMDG);
+        output$chaidMDG[iter] = akurasiCHAID(modelCHAID_MDG, test_dataset1_normMDG);
+        output$cartMDG[iter] = akurasiCART(modelCART_MDG, test_dataset1_normMDG);
+        output$c50MDG[iter] = akurasiC50(modelC50_MDG, test_dataset1_normMDG);
+        output$naivebayesMDG[iter] = akurasiNaiveBayes(modelNB_MDG, test_dataset1_normMDG);
+        output$svmMDG[iter] = akurasiCumSVM(modelSVM_MDG, test_dataset1_normMDG);
 
-modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 0.1, 0.01);
-modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 0.01, 0.01);
-modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 1, 0.01);
-modelSVMMulti = hitungSVM_multi2(train_dataset1_norm, test_dataset1_norm, 10, 0.01);
+        iter = iter + 1;
 
-set.seed(12345);
+    }
 
-modelRandomForest = hitungRandomForest(train_dataset1_norm, test_dataset1_norm);
-hitungNaiveBayes(train_dataset1_norm, test_dataset1_norm);
-hitungDecisionTree(train_dataset1_norm, test_dataset1_norm);
+    return(output);
 
-#############
-
-set.seed(12345);
-
-modelRandomForest = hitungRandomForest(train_dataset1_normMDA, test_dataset1_normMDA);
-hitungNaiveBayes(train_dataset1_normMDA, test_dataset1_normMDA);
-hitungDecisionTree(train_dataset1_normMDA, test_dataset1_normMDA);
-
-modelRandomForest = hitungRandomForest(train_dataset1_normMDG, test_dataset1_normMDG);
-hitungNaiveBayes(train_dataset1_normMDG, test_dataset1_normMDG);
-hitungDecisionTree(train_dataset1_normMDG, test_dataset1_normMDG);
-
-hitungSoftmax(train_dataset1_norm, test_dataset1_norm);
+}
