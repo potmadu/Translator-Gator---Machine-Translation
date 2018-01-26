@@ -7,13 +7,13 @@ library(dplyr);
 
 source("automation.R");
 
-train_file_action = "Training Data 2201 - Drop Column - 3 Class.csv";
-test_file_action = "Test Data 2201 - Drop Column - 3 Class.csv";
+train_file_action = "Training Data 2301 - Drop Column.csv";
+test_file_action = "Test Data 2301 - Drop Column.csv";
 train_file_word = "Training Data 1801 - Aggregated.csv";
 test_file_word = "Test Data 1801 - Aggregated.csv";
 target_column = "manual_assessment_avg";
 
-train_data = baca(train_file_action);
+train_data = baca2(train_file_action);
 colnames(train_data)[colnames(train_data) == target_column] = "respon";
 train_data$source.word = NULL;
 train_data$target.word = NULL;
@@ -22,7 +22,7 @@ train_data$manual_assessment = NULL;
 train_data$manual_assessment_2 = NULL;
 train_data$username = NULL;
 
-test_data = baca(test_file_action);
+test_data = baca2(test_file_action);
 colnames(test_data)[colnames(test_data) == target_column] = "respon";
 test_data$source.word = NULL;
 test_data$target.word = NULL;
@@ -113,3 +113,24 @@ train_data = train_dataset1_norm;
 test_data = test_dataset1_norm;
 
 modelRandomForest = trainRandomForest(train_data);
+predRF = predRandomForest(modelRandomForest, test_data);
+print(confusionMatrix(test_data$respon, predRF))
+
+modelC50 = trainC50(train_data);
+predC50 = predC50(modelC50, test_data);
+print(confusionMatrix(test_data$respon, predC50));
+
+modelNB = trainNaiveBayes(train_data);
+predNB = predNaiveBayes(modelNB, test_data);
+print(confusionMatrix(test_data$respon, predNB));
+
+modelSVM = trainCumSVM(train_dataset1_norm);
+predSVM = predCumSVM(modelSVM, test_dataset1_norm);
+print(confusionMatrix(test_dataset1_norm$respon, predSVM));
+
+output = data.frame(test_data$respon, predRF, predNB, predSVM, predC50);
+write.csv(output, "C:/Bootstrap Training Data 2301 - Drop Column - Results.csv");
+
+modelSVM = trainCumSVM_3class(train_dataset1_norm);
+predSVM = predCumSVM_3class(modelSVM, test_dataset1_norm);
+print(confusionMatrix(test_dataset1_norm$respon, predSVM));

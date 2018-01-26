@@ -420,8 +420,8 @@ summary(iris2);
 ind <- sample(2, nrow(iris2), replace = TRUE, prob = c(0.80, 0.20))
 
 # Split the `iris` data
-iris.training <- iris2[ind == 1, 1:4]
-iris.test <- iris2[ind == 2, 1:4]
+iris.training <- iris2[ind == 1, 1:4];
+iris.test <- iris2[ind == 2, 1:4];
 
 # Split the class attribute
 iris.trainingtarget <- iris[ind == 1, 5]
@@ -668,6 +668,125 @@ print(results)
 predictors(results)
 # plot the results
 plot(results, type = c("g", "o"))
+
+######### ROC Plot
+library(pROC);
+data(aSAH);
+
+#Contoh
+roc1 <- roc(aSAH$outcome,
+            aSAH$s100b, percent = TRUE,
+# arguments for auc
+            partial.auc = c(100, 90), partial.auc.correct = TRUE,
+            partial.auc.focus = "sens",
+# arguments for ci
+            ci = TRUE, boot.n = 100, ci.alpha = 0.9, stratified = FALSE,
+# arguments for plot
+            plot = TRUE, auc.polygon = TRUE, max.auc.polygon = TRUE, grid = TRUE,
+            print.auc = TRUE, show.thres = TRUE, smooth=TRUE)
+
+roc2 <- roc(aSAH$outcome, aSAH$wfns, plot = TRUE, add = TRUE, percent = roc1$percent,smooth = TRUE)
+
+##### CODE
+
+hasil = read.csv("C:/Experiments/summary_result_2301_test_balance_3.csv", stringsAsFactors = FALSE);
+
+hitungAUC_5class = function(aktual, prediksi) {
+
+    library(pROC);
+
+    df = data.frame(aktual, as.numeric(prediksi));
+    colnames(df) = c("aktual", "prediksi");
+
+    df12 = subset(df, aktual == 1 | aktual == 2);
+    df23 = subset(df, aktual == 2 | aktual == 3);
+    df34 = subset(df, aktual == 3 | aktual == 4);
+    df45 = subset(df, aktual == 4 | aktual == 5);
+
+    df12$prediksi[df12$prediksi != 1] = 2;
+    df23$prediksi[df23$prediksi != 2] = 3;
+    df34$prediksi[df34$prediksi != 3] = 4;
+    df45$prediksi[df45$prediksi != 4] = 5;
+
+    auc12 = auc(df12$aktual, df12$prediksi)[1];
+    auc23 = auc(df23$aktual, df23$prediksi)[1];
+    auc34 = auc(df34$aktual, df34$prediksi)[1];
+    auc45 = auc(df45$aktual, df45$prediksi[1]);
+    rataAUC = mean(auc12, auc23, auc34, auc45);
+
+    hasil_auc = list("auc12" = auc12, "auc23" = auc23, "auc34" = auc34, "auc45" = auc45, "rataAUC" = rataAUC);
+
+    return(hasil_auc);
+
+}
+
+hitungAUC_3class = function(aktual, prediksi) {
+
+    library(pROC);
+
+    df = data.frame(aktual, as.numeric(prediksi));
+    colnames(df) = c("aktual", "prediksi");
+
+    df12 = subset(df, aktual == 1 | aktual == 2);
+    df23 = subset(df, aktual == 2 | aktual == 3);
+
+    df12$prediksi[df12$prediksi != 1] = 2;
+    df23$prediksi[df23$prediksi != 2] = 3;
+
+    auc12 = auc(df12$aktual, df12$prediksi)[1];
+    auc23 = auc(df23$aktual, df23$prediksi)[1];
+    rataAUC = mean(auc12, auc23);
+
+    hasil_auc = list("auc12" = auc12, "auc23" = auc23, "rataAUC" = rataAUC);
+
+    return(hasil_auc);
+
+}
+
+#plot pertama parameternya grid=true
+
+df = data.frame(hasil$respon_asli, hasil$baseline);
+colnames(df) = c("aktual", "prediksi");
+
+df12 = subset(df, aktual == 1 | aktual == 2);
+df23 = subset(df, aktual == 2 | aktual == 3);
+df34 = subset(df, aktual == 3 | aktual == 4);
+df45 = subset(df, aktual == 4 | aktual == 5);
+
+df12$prediksi[df12$prediksi != 1] = 2;
+df23$prediksi[df23$prediksi != 2] = 3;
+df34$prediksi[df34$prediksi != 3] = 4;
+df45$prediksi[df45$prediksi != 4] = 5;
+
+roc1 <- roc(df45$aktual,
+            df45$prediksi, percent = TRUE,
+# arguments for auc
+            partial.auc = c(100, 90), partial.auc.correct = TRUE,
+            partial.auc.focus = "sens",
+# arguments for ci
+            ci = TRUE, boot.n = 100, ci.alpha = 0.9, stratified = FALSE,
+# arguments for plot
+            plot = TRUE, auc.polygon = TRUE, max.auc.polygon = TRUE, grid = TRUE,
+            print.auc = TRUE, show.thres = TRUE)
+
+roc12 = roc(df45$aktual, df45$prediksi, plot = TRUE, percent = TRUE);
+
+roc12 = roc(df12$aktual, df12$prediksi, plot = TRUE, grid = TRUE, percent = roc12$percent)
+roc23 = roc(df23$aktual, df23$prediksi, plot = TRUE, add = TRUE, percent = roc23$percent)
+roc34 = roc(df34$aktual, df34$prediksi, plot = TRUE, add = TRUE, percent = roc34$percent)
+roc45 = roc(df45$aktual, df45$prediksi, plot = TRUE, add = TRUE, percent = roc45$percent)
+
+#untuk plot selanjutnya, agar bisa ditimpa dalam plot yang sama diubah jadi add=TRUE
+roc2 = roc(hasil$respon_asli, hasil$LDA.full, plot = TRUE, add = TRUE, percent = roc2$percent)
+roc3 = roc(hasil$respon_asli, hasil$LDA.feature.selection, plot = TRUE, add = TRUE, percent = roc3$percent)
+roc4 = roc(hasil$respon_asli, hasil$LDA.penalized, plot = TRUE, add = TRUE, percent = roc4$percent)
+roc5 = roc(hasil$respon_asli, hasil$LDA.PCA.logistics, plot = TRUE, add = TRUE, percent = roc5$percent)
+roc6 = roc(hasil$respon_asli, hasil$LDA.PCA.logistics, plot = TRUE, add = TRUE, percent = roc6$percent)
+roc7 = roc(hasil$respon_asli, hasil$Log.penalized, plot = TRUE, add = TRUE, percent = roc7$percent)
+roc8 = roc(hasil$respon_asli, hasil$LDA.RF, plot = TRUE, add = TRUE, percent = roc8$percent)
+roc9 = roc(hasil$respon_asli, hasil$Log.RF, plot = TRUE, add = TRUE, percent = roc9$percent)
+roc10 = roc(hasil$respon_asli, hasil$LDA.PCA, plot = TRUE, add = TRUE, percent = roc10$percent)
+
 
 ######### RANDOM FOREST FEATURE SELECTIONS
 # RUN MODEL FIRST!!!

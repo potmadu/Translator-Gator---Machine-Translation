@@ -10,6 +10,14 @@ baca = function(nama_file) {
 
 }
 
+baca2 = function(nama_file) {
+
+    output = read.csv(paste("C:/Datasets/", nama_file, sep = ""), stringsAsFactors = FALSE);
+
+    return(output);
+
+}
+
 partisi = function(input_data,response_name) {
 
     #70/30 partition
@@ -87,6 +95,79 @@ trainCumSVM = function(train_data) {
     return(models);
 
 }
+
+trainCumSVM_3class = function(train_data) {
+
+    library(e1071);
+
+    print("Train CumSVM 3 Class");
+
+    train_data3 = subset(train_data, respon == 3, select = -respon);
+    train_data32 = subset(train_data, respon == 2, select = -respon);
+    train_data321 = subset(train_data, respon == 1, select = -respon);
+
+    #37.02%
+    #model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 0.001, gamma = 0.01);
+    #model32 = svm(train_data32, train_data32$respon, type = 'one-classification', nu = 0.1, gamma = 0.01);
+
+    #39.66%
+    #model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 0.1);
+    #model32 = svm(train_data32, train_data32$respon, type = 'one-classification', nu = 0.1);
+    #model321 = svm(train_data321, train_data321$respon, type = 'one-classification', nu = 0.1);
+
+    #37.01%
+    #model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 0.001);
+    #model32 = svm(train_data32, train_data32$respon, type = 'one-classification', nu = 0.001);
+    #model321 = svm(train_data321, train_data321$respon, type = 'one-classification', nu = 0.001);
+
+    #37.01%
+    #model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 1);
+    #model32 = svm(train_data32, train_data32$respon, type = 'one-classification', nu = 1);
+    #model321 = svm(train_data321, train_data321$respon, type = 'one-classification', nu = 1);
+
+    model3 = svm(train_data3, train_data3$respon, type = 'one-classification', nu = 0.1, gamma=0.001);
+    model32 = svm(train_data32, train_data32$respon, type = 'one-classification', nu = 0.1, gamma = 0.001);
+    model321 = svm(train_data321, train_data321$respon, type = 'one-classification', nu = 0.1, gamma = 0.001);
+    
+    models = list("model3" = model3, "model32" = model32,"model321"=model321);
+
+    return(models);
+
+}
+
+predCumSVM_3class = function(models, test_data) {
+
+    print("Pred CumSVM 3 class");
+
+    model3 = models$model3;
+    model32 = models$model32;
+    model321 = models$model321;
+
+    pred3 = predict(model3, subset(test_data, select = -respon));
+    pred32 = predict(model32, subset(test_data, select = -respon));
+    pred321 = predict(model321, subset(test_data, select = -respon));
+
+    preds = data.frame(pred3, pred32,pred321);
+    preds$pred = -1;
+
+    for (i in 1:nrow(preds)) {
+        if (preds$pred3[i]) {
+            preds$pred[i] = 3;
+        } else {
+            if (preds$pred32[i]) {
+                preds$pred[i] = 2;
+            } else {
+                preds$pred[i] = 1;
+            }
+        }
+    }
+
+    preds$target = test_data$respon;
+
+    return(preds$pred);
+
+}
+
 
 akurasiCumSVM = function(models,test_data) {
 
@@ -1193,3 +1274,54 @@ fsRandomForest_AccuracyAndROC = function(modelRandomForest, train_data, test_dat
 
 }
 
+hitungAUC_5class = function(aktual, prediksi) {
+
+    library(pROC);
+
+    df = data.frame(aktual, as.numeric(prediksi));
+    colnames(df) = c("aktual", "prediksi");
+
+    df12 = subset(df, aktual == 1 | aktual == 2);
+    df23 = subset(df, aktual == 2 | aktual == 3);
+    df34 = subset(df, aktual == 3 | aktual == 4);
+    df45 = subset(df, aktual == 4 | aktual == 5);
+
+    df12$prediksi[df12$prediksi != 1] = 2;
+    df23$prediksi[df23$prediksi != 2] = 3;
+    df34$prediksi[df34$prediksi != 3] = 4;
+    df45$prediksi[df45$prediksi != 4] = 5;
+
+    auc12 = auc(df12$aktual, df12$prediksi)[1];
+    auc23 = auc(df23$aktual, df23$prediksi)[1];
+    auc34 = auc(df34$aktual, df34$prediksi)[1];
+    auc45 = auc(df45$aktual, df45$prediksi)[1];
+    rataAUC = (auc12 + auc23 + auc34 + auc45) / 4;
+
+    hasil_auc = list("auc12" = auc12, "auc23" = auc23, "auc34" = auc34, "auc45" = auc45, "rataAUC" = rataAUC);
+
+    return(hasil_auc);
+
+}
+
+hitungAUC_3class = function(aktual, prediksi) {
+
+    library(pROC);
+
+    df = data.frame(aktual, as.numeric(prediksi));
+    colnames(df) = c("aktual", "prediksi");
+
+    df12 = subset(df, aktual == 1 | aktual == 2);
+    df23 = subset(df, aktual == 2 | aktual == 3);
+
+    df12$prediksi[df12$prediksi != 1] = 2;
+    df23$prediksi[df23$prediksi != 2] = 3;
+
+    auc12 = auc(df12$aktual, df12$prediksi)[1];
+    auc23 = auc(df23$aktual, df23$prediksi)[1];
+    rataAUC = (auc12 + auc23) / 2;
+
+    hasil_auc = list("auc12" = auc12, "auc23" = auc23, "rataAUC" = rataAUC);
+
+    return(hasil_auc);
+
+}
